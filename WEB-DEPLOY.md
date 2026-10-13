@@ -4,11 +4,12 @@ This is the browser-playable Open Historia — the "play on a website" build. It
 static app (served from a trusted origin) that keeps games client-side, sends AI keys
 straight to the player's provider, and loads map data from the content-node network.
 
-**Chosen setup:** app on **Cloudflare Pages**; map data from **content nodes only**
+**Chosen setup:** app on **GitHub Pages**; map data from **content nodes only**
 (no origin fallback — the map loads once at least one node in the signed directory is
 serving it).
 
-Prerequisites: a free Cloudflare account, Node 18+, and the offline root signing key
+Prerequisites: a GitHub repo with Pages enabled, a free Cloudflare account (for the
+registry Worker), Node 18+, and the offline root signing key
 (`trust/oh-root.key.pem`, from `scripts/gen-signing-key.mjs`).
 
 ---
@@ -45,14 +46,14 @@ $env:VITE_OH_DIRECTORY_URL="https://open-historia-registry.<you>.workers.dev/nod
 
 This produces `dist-web/`. (Base path is `/`, correct for Cloudflare Pages.)
 
-## 3. Deploy `dist-web/` to Cloudflare Pages
+## 3. Deploy to GitHub Pages
 
-```bash
-npx wrangler pages deploy dist-web --project-name open-historia
-```
+The repository workflow `.github/workflows/deploy-site.yml` builds and publishes `dist-site/`
+to GitHub Pages on every push to `main` (and via manual dispatch). Enable Pages in the
+repository settings and set the source to **GitHub Actions**.
 
-First run creates the project; it prints your URL (e.g. `https://open-historia.pages.dev`).
-Add a custom domain in the Cloudflare Pages dashboard if you want.
+After the workflow runs, the site is available at your Pages URL (for example:
+`https://<account>.github.io/<repo>/`).
 
 ## 4. Run at least one content node (so maps load)
 
@@ -89,7 +90,7 @@ in the browser (Export/Import for backups).
   rest of the site (menus, scenarios) loads fine. (To add an always-on fallback later, host
   the 3 pmtiles on a CORS-enabled bucket like Cloudflare R2 and wire it as the origin.)
 - **The signing key stays offline** — only the machine running the admin panel touches it.
-- **Updating the game:** rebuild with the same `VITE_OH_DIRECTORY_URL` and re-run
-  `wrangler pages deploy`. Everyone gets the update on their next load — no per-player step.
+- **Updating the game:** push to `main` (or run the deploy workflow manually). Everyone
+  gets the update on their next load — no per-player step.
 - **Local single-player is unaffected** by all of this — the downloadable app still runs
   its own server and never uses any of the web-mode / node code.
